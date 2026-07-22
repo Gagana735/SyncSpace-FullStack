@@ -1,0 +1,34 @@
+.remote-cursors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.remote-cursor {
+  position: absolute;
+  transform: translate(-2px, -2px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: left 0.08s linear, top 0.08s linear;
+}
+
+.remote-cursor-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cursor-color, var(--accent));
+  border: 2px solid white;
+  display: block;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.remote-cursor-label {
+  background: var(--cursor-color, var(--accent));
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}

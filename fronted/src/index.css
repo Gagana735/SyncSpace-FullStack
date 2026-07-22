@@ -1,0 +1,42 @@
+:root {
+  --ink: #171a21;
+  --paper: #f6f5f2;
+  --panel: #ffffff;
+  --line: #e3e1db;
+  --accent: #3457d5;
+  --accent-soft: #e8ecfc;
+  --code-bg: #1e1e2e;
+  --success: #2f9e44;
+  --danger: #e03131;
+  --font-display: 'Fraunces', 'Georgia', serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
