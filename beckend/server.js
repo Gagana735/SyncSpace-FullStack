@@ -4,13 +4,15 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const socketHandler = require("./socket/socketHandler");
+const { socketAuthMiddleware } = require("./socket/socketAuth"); // <-- added
 const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes"); // <-- added
+const roomRoutes = require("./routes/roomRoutes"); // <-- added
 
 // Connect to MongoDB
 connectDB();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
@@ -18,6 +20,10 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("Backend is working!");
 });
+
+// Auth & room REST routes (added)
+app.use("/api/auth", authRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -28,6 +34,9 @@ const io = new Server(server, {
         origin: "*",
     },
 });
+
+// Require a valid JWT before any socket connection is accepted (added)
+io.use(socketAuthMiddleware);
 
 // Call socket handler
 socketHandler(io);

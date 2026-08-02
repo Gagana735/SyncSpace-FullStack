@@ -2,6 +2,7 @@ const Y = require("yjs");
 const Room = require("../models/Room");
 const Document = require("../models/Document");
 const { toBase64, fromBase64 } = require("../utils/base64");
+const { checkSocketRoomAccess } = require("./socketAuth"); // <-- added
 
 // In-memory cache of live Y.Doc instances, keyed by "roomId:docName".
 // Kept in memory for speed while sockets are connected; persisted to
@@ -61,33 +62,44 @@ function schedulePersist(roomId, docName) {
 
 module.exports = (io) => {
     io.on("connection", (socket) => {
-        console.log("User connected:", socket.id);
+        console.log("User connected:", socket.id, "as", socket.authUser?.name);
 
         // ---- Room join/leave (persists the room in MongoDB) ----
 
         socket.on("room:join", async ({ roomId, user }) => {
-            if (!roomId || !user) return;
+            if (!roomId) return;
+
+            // --- Access control check (added) ---
+            // socket.authUser was set by socketAuthMiddleware during the
+            // handshake, so this is a verified identity, not whatever the
+            // client claims in `user`.
+            let room;
+            try {
+                room = await checkSocketRoomAccess(socket, roomId);
+            } catch (err) {
+                socket.emit("room:access-denied", { message: err.message });
+                console.log(`${socket.authUser.name} denied access to room ${roomId}: ${err.message}`);
+                return;
+            }
+
+            // Merge verified identity (id, name) with client-side display
+            // info (color) so the whiteboard cursor UI keeps working as-is.
+            const verifiedUser = {
+                id: String(socket.authUser._id),
+                name: socket.authUser.name,
+                color: user?.color || "#000000",
+            };
 
             socket.join(roomId);
-            socketUsers[socket.id] = { roomId, user };
-
-            try {
-                await Room.findOneAndUpdate(
-                    { roomId },
-                    { $setOnInsert: { roomId, createdBy: user } },
-                    { upsert: true }
-                );
-            } catch (err) {
-                console.error("Failed to save room to MongoDB:", err.message);
-            }
+            socketUsers[socket.id] = { roomId, user: verifiedUser };
 
             // Send the current member list to the person who just joined
             socket.emit("room:users", getRoomUsers(io, roomId, socket.id));
 
             // Tell everyone else in the room that a new user joined
-            socket.to(roomId).emit("user:joined", user);
+            socket.to(roomId).emit("user:joined", verifiedUser);
 
-            console.log(`${socket.id} joined room ${roomId}`);
+            console.log(`${verifiedUser.name} joined room ${roomId}`);
         });
 
         socket.on("room:leave", ({ roomId }) => {

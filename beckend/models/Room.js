@@ -13,6 +13,17 @@ const roomSchema = new mongoose.Schema(
             name: String,
             color: String,
         },
+        // --- Added for JWT auth / access control ---
+        owner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        },
+        invitedUsers: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+        ],
     },
     { timestamps: true }
 );
